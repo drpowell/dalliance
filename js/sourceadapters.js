@@ -1216,7 +1216,7 @@ function bamRecordToFeature(r, group) {
         var ops = parseCigar(r.cigar);
         for (var ci = 0; ci < ops.length; ++ci) {
             var co = ops[ci];
-            if (co.op == 'M' || co.op == 'D')
+            if (co.op == 'M' || co.op == 'D' || co.op=='N')
                 len += co.cnt;
         }
     }
@@ -1227,7 +1227,7 @@ function bamRecordToFeature(r, group) {
     f.segment = r.segment;
     f.type = 'bam';
     f.id = r.readName;
-    f.notes = [/* 'Sequence=' + r.seq, 'CIGAR=' + r.cigar, */ 'MQ=' + r.mq];
+    f.notes = [/* 'Sequence=' + r.seq, */'CIGAR=' + r.cigar, 'MQ=' + r.mq];
     f.cigar = r.cigar;
     f.seq = r.seq;
     f.quals = r.quals;

@@ -1147,7 +1147,7 @@ AminoAcidGlyph.prototype.toSVG = function() {
 
 var isRetina = window.devicePixelRatio > 1;
 var __dalliance_SequenceGlyphCache = {};
-var altPattern = new RegExp('^[ACGT-]$');
+var altPattern = new RegExp('^[ACGT-_]$');
 var isCloseUp = function(scale) {
     return scale >= 8;
 }
@@ -1192,7 +1192,6 @@ SequenceGlyph.prototype.draw = function(gc) {
             gc.fillRect(this._min, this._height/4, this._max - this._min, this._height/2);
     }
 
-    
     for (var p = 0; p < seqLength; ++p) {
         var base = seq ? seq.substr(p, 1).toUpperCase() : 'N';
         
@@ -1221,39 +1220,51 @@ SequenceGlyph.prototype.draw = function(gc) {
         gc.fillStyle = color;
 
         var alt = altPattern.test(base);
-        if (this._fillbg || !isCloseUp(scale) || !alt) {
-            if (this._scaleVertical)
-                gc.fillRect(this._min + p*scale, scale, scale, scale);
-            else
-                gc.fillRect(this._min + p*scale, 0, scale, this._height);
-        }
-        if (isCloseUp(scale) && alt) {
-            var key = color + '_' + base
-            var img = __dalliance_SequenceGlyphCache[key];
-            if (!img) {
-                img = document.createElement('canvas');
-                if (isRetina) {
-                    img.width = 16;
-                    img.height = 20;
-                } else {
-                    img.width = 8;
-                    img.height = 10;
-                }
-                var imgGc = img.getContext('2d');
-                if (isRetina) {
-                    imgGc.scale(2, 2);
-                }
-                imgGc.fillStyle = this._fillbg ? 'black' : color;
-                var w = imgGc.measureText(base).width;
-                imgGc.fillText(base, 0.5 * (8.0 - w), 8);
-                __dalliance_SequenceGlyphCache[key] = img;
+        if (base=='_') {
+            // Split read.  Optimise drawing the whole split
+            for (var p2=p+1; p2<seqLength && seq.substr(p2,1)=='_'; p2++)
+                ;
+            // Redraw the background, then draw a 1 pixel height line
+            gc.fillStyle = 'white';
+            gc.fillRect(this._min + p*scale, 0, (p2-p)*scale, this._height);
+            gc.fillStyle = color;
+            gc.fillRect(this._min + p*scale, this._height/2, (p2-p)*scale, 1);
+            p = p2;
+        } else {
+            if (this._fillbg || !isCloseUp(scale) || !alt) {
+                if (this._scaleVertical)
+                    gc.fillRect(this._min + p*scale, scale, scale, scale);
+                else
+                    gc.fillRect(this._min + p*scale, 0, scale, this._height);
             }
-            var dy = this._scaleVertical ? scale : 0;
-            if (isRetina)
-                gc.drawImage(img, this._min + p*scale + 0.5*(scale-8), dy, 8, 10);
-            else
-                gc.drawImage(img, this._min + p*scale + 0.5*(scale-8), dy);
-        } 
+            if (isCloseUp(scale) && alt) {
+                var key = color + '_' + base
+                var img = __dalliance_SequenceGlyphCache[key];
+                if (!img) {
+                    img = document.createElement('canvas');
+                    if (isRetina) {
+                        img.width = 16;
+                        img.height = 20;
+                    } else {
+                        img.width = 8;
+                        img.height = 10;
+                    }
+                    var imgGc = img.getContext('2d');
+                    if (isRetina) {
+                        imgGc.scale(2, 2);
+                    }
+                    imgGc.fillStyle = this._fillbg ? 'black' : color;
+                    var w = imgGc.measureText(base).width;
+                    imgGc.fillText(base, 0.5 * (8.0 - w), 8);
+                    __dalliance_SequenceGlyphCache[key] = img;
+                }
+                var dy = this._scaleVertical ? scale : 0;
+                if (isRetina)
+                    gc.drawImage(img, this._min + p*scale + 0.5*(scale-8), dy, 8, 10);
+                else
+                    gc.drawImage(img, this._min + p*scale + 0.5*(scale-8), dy);
+            } 
+        }
 
         if (this._quals) {
             gc.globalAlpha = oldAlpha;

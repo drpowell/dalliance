@@ -991,9 +991,9 @@ function glyphForFeature(feature, y, style, tier, forceHeight, noLabel)
                     seq += rawseq.substr(cursor, co.cnt);
                     quals += rawquals.substr(cursor, co.cnt);
                     cursor += co.cnt;
-                } else if (co.op == 'D') {
+                } else if (co.op == 'D' || co.op=='N') {
                     for (var oi = 0; oi < co.cnt; ++oi) {
-                        seq += '-';
+                        seq += co.op == 'D' ? '-' : '_';
                         quals += 'Z';
                     }
                 } else if (co.op == 'I') {

@@ -154,6 +154,7 @@ function Browser(opts) {
             G: 'orange',
             T: 'red',
             '-' : 'hotpink', // deletion
+            '_' : 'lightblue', // split read gap
             'I' : 'red' // insertion
         };
     }
