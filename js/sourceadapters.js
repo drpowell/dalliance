@@ -1210,7 +1210,8 @@ function bamRecordToFeature(r, group) {
         len = r.seq.length;
     else 
         len = r.seqLength;
-    
+
+    var f = new DASFeature();
     if (r.cigar) {
         len = 0;
         var ops = parseCigar(r.cigar);
@@ -1218,10 +1219,10 @@ function bamRecordToFeature(r, group) {
             var co = ops[ci];
             if (co.op == 'M' || co.op == 'D' || co.op=='N')
                 len += co.cnt;
+            f.splitRead |= (co.op == 'N')  // Tag feature as split-read.  Need to handle down-sampling differently
         }
     }
 
-    var f = new DASFeature();
     f.min = r.pos + 1;
     f.max = r.pos + len;
     f.segment = r.segment;

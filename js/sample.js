@@ -111,11 +111,42 @@ function downsample(features, targetRez) {
             return features;
         }
 
+        if (f.splitRead) {
+            // In case of a split-read, we need to parse the cigar to work out which bins it spans.
+            // Slower, but should be many fewer split reads
+            var binPresent = [];
+            var ops = parseCigar(f.cigar);
+            var pos = f.min+1;
+            for (var ci = 0; ci < ops.length; ++ci) {
+                var co = ops[ci];
+                switch (co.op) {
+                    case 'M':
+                        var minLap = (pos / scale)|0;
+                        var maxLap = ((pos+co.cnt) / scale)|0;
+                        for (var b = minLap; b <= maxLap; ++b) {
+                            binPresent[b] = true;
+                        }
+                        pos += co.cnt;
+                        break;
+                    case 'D':
+                    case 'N':
+                        pos += co.cnt;
+                        break;
+                    case 'I':
+                    case 'S':
+                        // Don't move along reference
+                        break;
+                }
+            }
+        }
+
         var minLap = (f.min / scale)|0;
         var maxLap = (f.max / scale)|0;
         maxBin = Math.max(maxBin, maxLap);
         minBin = Math.min(minBin, minLap);
         for (var b = minLap; b <= maxLap; ++b) {
+            if (f.splitRead && !binPresent[b])
+                continue;
             var bm = binTots[b];
             if (!bm) {
                 bm = new DSBin(scale, b * scale, (b + 1) * scale - 1);
